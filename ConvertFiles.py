@@ -16,6 +16,7 @@ import pandas as pd
 import re
 from opencvui import openimage
 import argparse
+from opencvui import openimage
 
 
 
@@ -74,11 +75,15 @@ if __name__ == "__main__":
 
     WorkersList = []
     for i in directories[:1]:
+        SKcrop = openimage()
+        print(SKcrop)
+  
+        
         for file in os.listdir(path+"\\"+i):
             if file.endswith(".jpg"):
                 im = plt.imread(path +"\\"+ i +"\\" + file)
         #        print(im.shape)
-                im= im[SKcrop[i][0]:SKcrop[i][1],SKcrop[i][2]:SKcrop[i][3],:]
+                im= im[SKcrop[1]:SKcrop[3],SKcrop[0]:SKcrop[2],:]
                 plt.imshow(im)
                 plt.show()
                 a = ocr_core(im)
