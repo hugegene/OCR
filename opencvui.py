@@ -32,19 +32,23 @@ def mouse_crop(event, x, y, flags, param):
     elif event == cv2.EVENT_LBUTTONUP:
         # record the ending (x, y) coordinates
         x_end, y_end = x, y
-        cropping = False # cropping is finished
-    
- 
+        cropping = False  # cropping is finished
+     
 #        refPoint = [(x_start, y_start), (x_end, y_end)]
-# 
+#
 #        if len(refPoint) == 2: #when two points were found
 #            roi = oriImage[refPoint[0][1]:refPoint[1][1], refPoint[0][0]:refPoint[1][0]]
 #            cv2.imshow("Cropped", roi)
 
-def openimage(imagename = "C:\\Users\\bdgecyt\\Desktop\\SengKang_Part_1\\a\\image_label20190523-093653.jpg"):
-    print(imagename)
-    image = cv2.imread(imagename)
-    oriImage = image.copy()
+def openimage(imagename = "C:\\Users\\bdgecyt\\Desktop\\SengKang_Part_1\\a\\image_label20190523-093653.jpg", image = None):
+    if image is not None:
+        oriImage = image.copy()
+        imagename = "image"
+    else:
+        print(imagename)
+        image = cv2.imread(imagename)
+        oriImage = image.copy()
+        
     cv2.namedWindow(imagename)
     cv2.setMouseCallback(imagename, mouse_crop)
     
