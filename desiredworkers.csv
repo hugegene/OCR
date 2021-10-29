@@ -1,4 +1,4 @@
-month,channel,week,timeofday,images
+month,channel,week,timeofday,videos
 201805,CH1,1,afternoon,have
 201805,CH1,1,evening,have
 201805,CH1,1,morning,have
@@ -431,3 +431,15 @@ month,channel,week,timeofday,images
 201907,CH9,4,afternoon,have
 201907,CH9,4,evening,have
 201907,CH9,4,morning,have
+201909,CH9,1,afternoon,have
+201909,CH9,1,evening,have
+201909,CH9,1,morning,have
+201909,CH9,2,afternoon,have
+201909,CH9,2,evening,have
+201909,CH9,2,morning,have
+201909,CH9,3,afternoon,have
+201909,CH9,3,evening,have
+201909,CH9,3,morning,have
+201909,CH9,4,afternoon,have
+201909,CH9,4,evening,have
+201909,CH9,4,morning,have

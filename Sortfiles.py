@@ -15,6 +15,8 @@ from shutil import copyfile
 from subprocess import call
 import time 
 import cv2
+import xml.etree.ElementTree
+
 
 #random.seed(time.time())
 pd.set_option('display.max_columns', None)  # or 1000
@@ -46,13 +48,23 @@ def randomdates(month, ch, week, timeofday):
 def checkforvalidfiles(filename, filesize):
     validfile = None
     PATH = Path("E:\\Welltech_Video_mp4")  
+    
+#    print("generatedname is " + filename.lower())
     month, channel, day, time = parsefilename(filename)
 #    print(listdir(PATH/month/channel))
     for i in listdir(PATH/month/channel):
-        if filename in i:
+#        print(i.lower())
+#        print(filename.lower()[4:] in i.lower())
+#        
+        if filename.lower() in i.lower():
+#            print("matchhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+#            print(os.stat(PATH/month/channel/i).st_size)
             if os.stat(PATH/month/channel/i).st_size > filesize:
                 validfile =  i
-#                print("valid file")
+                print("good file sizeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+                print("valid " + str(validfile))
+                break
+
     return validfile
     
     
@@ -131,9 +143,30 @@ def checkotherfolder(baseon, toclean):
     existing = readexisting(folderpath= baseon)
     existing["filename"]= [i[:-11] for i in existing["filename"]]
     for i in existing['filename']:
-        if i in toclean:
+        if i.lower() in toclean.lower():
             return False
     return True
+
+
+def checktrainagainstnoworker(toclean):
+    with open("noworkervideolist.txt", "r") as f:
+        noworkerlist = f.read().splitlines()
+    for i in noworkerlist:
+        if i.lower() in toclean.lower():
+            return False
+    return True
+    
+
+def checkxmlworkers(jpgfile):
+    try:
+        tree = xml.etree.ElementTree.parse("D:\\trainJPG\\"+ jpgfile[:-3] +'xml')
+    #    print("read xml file")
+        root = tree.getroot()
+        num = len(root.findall("object"))
+        return num
+    except:
+        return 0
+    
 
 def readexisting(folderpath= None, csv = None):
     listinfo =[]
@@ -142,14 +175,16 @@ def readexisting(folderpath= None, csv = None):
         for i in listdir(PATH2):
             if i.endswith((".jpg", ".mp4", ".dav")):
                 mn, ch, dy, ti = parsefilename(i)
-                listinfo += [[mn, dy, ch, ti, i]]
+                numofworkers = checkxmlworkers(i)
+                listinfo += [[mn, dy, ch, ti, i, numofworkers]]
     if csv:
         data = pd.read_csv(csv)
         for i in data.values:
             mn, ch, dy, ti = parsefilename(i[0])
-            listinfo += [[mn, dy, ch, ti, i[0]]]
+            numofworkers = checkxmlworkers(i[0])
+            listinfo += [[mn, dy, ch, ti, i[0], numofworkers]]
 
-    folderframe = pd.DataFrame(listinfo, columns=["month", "day", "channel", "time", "filename"])
+    folderframe = pd.DataFrame(listinfo, columns=["month", "day", "channel", "time", "filename", 'numofworkers'])
 #    print(folderframe[:10])
 
     folderframe["day"] = folderframe["day"].astype(int)
@@ -218,7 +253,7 @@ def checktrainagainsttest():
             print("removing " + path[:-4] + ".xml" + " because its in test set")
             os.remove(path[:-4] + ".xml")
 
-
+    
 def cleanfolder(baseon, toclean):
     existing = readexisting(folderpath= baseon)
 #    print([len(i) for i in existing["filename"]])
@@ -249,7 +284,8 @@ if __name__=="__main__":
     checkforlonelyXML("D:\\trainJPG\\")
     checktrainagainsttest()
     cleanfolder("D:\\trainJPG", "D:\\trainMP4\\")
-    cleanfolder("D:\\trainJPG", "D:\\train\\")
+    
+#    cleanfolder("D:\\trainJPG", "D:\\train\\")
 
     #Set up CSV according to folders
 #    desired = setupdesired()
@@ -262,19 +298,21 @@ if __name__=="__main__":
     desired['month'] = desired['month'].astype(str)
 #    print(desired)
     
-    desiredsummary = pd.DataFrame(desired.groupby(["month", "channel", "week", "timeofday"])["images"].count())
+    desiredsummary = pd.DataFrame(desired.groupby(["month", "channel", "week", "timeofday"])["videos"].count())
 #    print(desiredsummary)
     
     existing = readexisting(folderpath= "D:\\trainJPG")
 #    print(existing.head())
 
     existingsummary = pd.DataFrame(existing.groupby(["month", "channel", "week", "timeofday"])["filename"].count())
-#    print(existingsummary)
+    workersnumsummary = pd.DataFrame(existing.groupby(["month", "channel", "week", "timeofday"])["numofworkers"].sum())
+    existingsummary["numofworkers"] = workersnumsummary["numofworkers"]
+#    print(existingsummary.head())
       
     finalsummary = pd.merge(desiredsummary, existingsummary, how='left', left_on=['month', 'channel', 'week', 'timeofday'], right_on = ['month', 'channel', 'week', 'timeofday'])
     print(finalsummary)
     finalsummary.to_csv("workersdatasetsummary.csv")
-    
+
     continueanot = input("continue files update (y/n): ")
     if continueanot == "y":
         
@@ -283,7 +321,7 @@ if __name__=="__main__":
         missingindex = finalsummary.loc[pd.isna(finalsummary["filename"]), :].index
         print(len(missingindex))
         
-        for i in missingindex[135:]:
+        for i in missingindex[:]:
             
             print("working on" + str(i))
             MP4folder = readexisting(folderpath= "D:\\trainMP4")
@@ -300,16 +338,22 @@ if __name__=="__main__":
                 tim = i[3]
                 
                 while count < 1:
-                    if tries == 8000:
+                    if tries == 65:
                         print("tried too many times")
                         break  
                     generatedname = randomdates(mon, cam, wek, tim)
 #                    print(generatedname[:-4])
-                    valid = checkforvalidfiles(generatedname[:-4], 300000000)
-    #                print(valid)
+                    valid = checkforvalidfiles(generatedname[:-4], 10000000)
+#                    100000000
+#                    print("validated " + str(valid))
+
                     tries += 1
+                    
                     if valid:
                         ok = checkotherfolder("D:\\testJPG", valid)
+                        print("ok with test")
+                        ok = checktrainagainstnoworker(valid)
+                        print("ok with noworkers list")
                         if ok == True:
                             if valid.endswith(".mp4"):
                                 print(valid + "is mp4")

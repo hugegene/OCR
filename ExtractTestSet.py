@@ -45,6 +45,7 @@ def split_test_video(video, secs, extractfps, start_frame, i):
     while success:
         print(currenttime - starttime)
         if currenttime - starttime > duration:
+            print("break")
             break
         vidcap2.set(cv2.CAP_PROP_POS_MSEC, currenttime)    # added this line 
         success,image = vidcap2.read()
